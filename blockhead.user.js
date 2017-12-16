@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 //This script blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
-//It checks the computed style of each element. if the position attribute is relative, fixed or absolute
+//It checks the computed style of each element. if the position attribute is fixed or absolute or ~relative~
 //then it checks if its id or classes names contain provided in the list below.
 //this list is created with theis tool https://github.com/elypter/rule_keyword_generator by parsing the rules https://raw.githubusercontent.com/yourduskquibbles/webannoyances/master/ultralist.txt
 //for class names and ids.
@@ -20,6 +20,24 @@
 //on an old laptop it can take up to single digit seconds so pageloadtime noticable increases.
 //License: GPL3
 
+
+//id and classes that contain any of these keywords will not be modified
+var white_names = ["side","article","html5","story","main","left","right","content","account__section","container--wide","container__main","panel","body","gutter","embed","watch","background","middleContainer","drag-and-drop"];
+
+//tags that will not be cheked
+var ignore_tags = ["a","A","script","SCRIPT","body","BODY","li","LI","ul","UL","br","BR","h5","H5","b","B","strong","STRONG","svg","SVG","path","PATHH","h2","H2",
+                   "code","CODE","tr","TR","td","TD","h3","H3","h1","H1","h4","H4"];//,"noscript","NOSCRIPT"
+
+var mutation_check=true; //search for floating elements that get added after page load.
+var substring_search=true; //cannot be switched off anymore.
+
+var count_element_walker=0; //debug:counts how often a page check is triggered
+var count_style_walking=0; //debug:counts how often checking stylesheets is triggered
+var generated_rules=[]; //contains all adblock/ublock rules that the script creates based on what it modifies
+var walk_elements=true; //all elements of a site will be checked individually for their computed style and changed if there is a match
+var walk_styles=false; //all stylesheets will be checked for classes and changed if there is a match
+
+//list generated with rule_keyword_generator from webannoyances ultralist
 var black_keywords=["inline",
 "social",
 "navbar",
@@ -814,26 +832,14 @@ var black_keywords=["inline",
 "lockfixed",
 "breadcrumb"];
 
-//id and classes that contain any of these keywords will not be modified
-var white_names = ["side","article","html5","story","main","left","right","content","panel","body","gutter","watch"];
 
-//tags that will not be cheked
-var ignore_tags = ["a","A","script","SCRIPT","body","BODY","li","LI","ul","UL","br","BR","h5","H5","b","B","strong","STRONG","svg","SVG","path","PATHH","h2","H2",
-                   "code","CODE","tr","TR","td","TD","h3","H3","h1","H1","h4","H4"];//,"noscript","NOSCRIPT"
-
-var mutation_check=true; //search for floating elements that get added after page load.
-var substring_search=true; //cannot be switched off anymore.
-
-var counter=0;//debug:counts how often a page check is triggered
-var generated_rules=[]; //contains all adblock/ublock rules that the script creates based on what it modifies
-
-function c_walk(elm,orig){
-    counter++;
-    //console.log("check number "+counter+" from: "+orig);
-    walk(elm);
+function counted_element_walker(elm,orig){
+    count_element_walker++;
+    //console.log("check number "+count_element_walker+" from: "+orig);
+    element_walker(elm);
 }
 
-function c_match(keyword_list){
+function keyword_walker(keyword_list){
     //todo: switch order of for loops to detect whitelists earlier
     var state=-1;
     //console.log("list: ("+keyword_list.length+") "+keyword_list)
@@ -846,14 +852,14 @@ function c_match(keyword_list){
             for (var k=0; k < subsubword_list.length; k++){
                 for (var l=0; l < white_names.length; l++){
                     //console.log("test white: l:"+white_names[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
-                    if (subsubword_list[k].indexOf(white_names[l]) !== -1){
-                        console.log("whitelisted: l:"+white_names[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
+                    if (subsubword_list[k].indexOf(white_names[l]) != -1){
+                        //console.log("whitelisted: l:"+white_names[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
                         return 0;
                     }
                 }
-                for (var m=0; m < black_keywords.length; m++){
-                    if (subsubword_list[k].indexOf(black_keywords[m]) !== -1){
-                        console.log("matched: l:"+black_keywords[m]+" in s:"+subsubword_list[k]+" of "+keyword_list);
+                for (var l=0; l < black_keywords.length; l++){
+                    if (subsubword_list[k].indexOf(black_keywords[l]) != -1){
+                        //console.log("matched: l:"+black_keywords[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
                         state = 1;
                     }
                 }
@@ -864,12 +870,13 @@ function c_match(keyword_list){
     return state;
 }
 
-function walk(elm) {
+function element_walker(elm) {
     //if (elm instanceof Element) if (ignore_tags.indexOf(elm.tagName.toString()) > -1) return;
     var node;
-    if(elm instanceof Element && ignore_tags.indexOf(elm.tagName.toString()) == -1 && getComputedStyle(elm)) {if ((getComputedStyle(elm).getPropertyValue("position") == "absolute") ||
+    if(elm instanceof Element && ignore_tags.indexOf(elm.tagName.toString()) == -1 && getComputedStyle(elm)) {
+                                if (/*(getComputedStyle(elm).getPropertyValue("position") == "absolute") ||*/
                                     (getComputedStyle(elm).getPropertyValue("position") == "fixed") ||
-                                    (getComputedStyle(elm).getPropertyValue("position") == "relative") ||
+                                    /*(getComputedStyle(elm).getPropertyValue("position") == "relative") ||*/
                                     (getComputedStyle(elm).getPropertyValue("top") != "")) {
         var keyword_list =[];
         keyword_list=elm.className.toString().split(' ');
@@ -877,7 +884,7 @@ function walk(elm) {
 
         var has_matched=-1;
         if (keyword_list!=[]&&keyword_list!=[""]){
-            has_matched=c_match(keyword_list);
+            has_matched=keyword_walker(keyword_list);
         }
         var rule;
         var class_list=elm.className.toString().split(' '); //check for rule writing
@@ -923,19 +930,67 @@ function walk(elm) {
     // Handle child elements
     for (node = elm.firstChild; node; node = node.nextSibling) {
         if (node.nodeType === 1) { // 1 == Element
-            walk(node);
+            element_walker(node);
         }
     }
 }
 
+function style_walker() {
+    var state=0;
+    count_style_walking++;
+    //console.log("checking stylesheets for the "+count_style_walking+"th time");
+    var styleSheets = window.document.styleSheets;
+
+    for(var i = 0; i < styleSheets.length; i++){
+        //console.log("checking stylesheet #"+i);//+" named "+styleSheets[i].sheet);
+
+        //try to get a list of classes for each stylesheet.
+        //this will throw an error if the stylesheet is hosted on an external server because of cross site protection
+        //these stylesheets cannot be processed at them moment/or never
+        var classes;
+        try{ if (document.styleSheets[i].cssRules){
+            classes=document.styleSheets[i].cssRules;
+        }else if (document.styleSheets[i].rules){
+            classes=document.styleSheets[i].rules;
+        }}catch(e){}
+
+        for (var j = 0; j < classes.length; j++) {
+            //console.log("checking class "+classes[x].selectorText);
+            state=0;
+            for (var k=0; k < black_keywords.length; k++){
+                if (classes[j].selectorText) if (classes[j].selectorText.indexOf(black_keywords[k])!=-1){
+                    //console.log("matched: l:"+black_keywords[k]+" in s:"+classes[j].selectorText+" of "+styleSheets[i].sheet);
+                    if (classes[j].position=="absolute" ||classes[j].position=="static"){
+                        state = 1;
+                    }
+                }
+            }
+            for (var k=0; k < white_names.length; k++){
+                if (classes[j].selectorText) if (classes[j].selectorText.indexOf(white_names[k])!=-1){
+                    //console.log("whitelisted: l:"+white_names[k]+" in s:"+classes[j].selectorText+" of "+styleSheets[i].sheet);
+                    state=0;
+                }
+            }
+            if (state==1){
+                stylesheet.deleteRule("position");
+            }
+        }
+    }
+}
+
+
 // Kick it off starting with the `body` element
-c_walk(document.body,"onstart");
+if(walk_styles) style_walker();
+if(walk_elements) counted_element_walker(document.body,"onstart");
 
-document.onchange = c_walk(document.body,"onchange");
+// check elements again if the page code changes
+if(walk_elements) document.onchange = counted_element_walker(document.body,"onchange");
 
-document.onscroll = c_walk(document.body,"onscroll");
+// check elements again if the user scrolls the page(doesnt really do anything)
+if(walk_elements) document.onscroll = counted_element_walker(document.body,"onscroll");
 
-if(mutation_check){
+//check if the dom is modified and checks the changed elements again
+if(mutation_check && walk_elements){
     MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
 
     // define a new observer
@@ -943,16 +998,16 @@ if(mutation_check){
         // look through all mutations that just occured
         for(var i=0; i<mutations.length; ++i) {
             for(var j=0; j<mutations[i].addedNodes.length; ++j) {
-                //console.log(mutations[i].addedNodes[j]);
-                c_walk(mutations[i].addedNodes[j],"onmutation");
+                //check this mutation
+                counted_element_walker(mutations[i].addedNodes[j],"onmutation");
             }
         }
     });
 
     // have the observer observe for changes in children
     obs.observe(document.body, {
-        attributes : true,
-        childList: true,
-        subtree: false
+        attributes : true, //check for attribute changes
+        childList: true, //use a list of occured changes
+        subtree: false //also return all subelements of a change
     });
 }
