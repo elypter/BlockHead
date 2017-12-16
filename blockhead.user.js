@@ -936,6 +936,9 @@ function element_walker(elm) {
 }
 
 function style_walker() {
+    //this alternative mode of searching and modifying sticky elements by searching stylesheets directly
+    //although i thought stylesheet checking would be faster it tends be slower and cannot be performed on external stylesheets
+    
     var state=0;
     count_style_walking++;
     //console.log("checking stylesheets for the "+count_style_walking+"th time");
