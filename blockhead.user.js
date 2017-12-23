@@ -3,7 +3,7 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version     7
+// @version     8
 // @grant    GM.getValue
 // @grant    GM.setValue
 // @grant unsafeWindow
@@ -842,6 +842,9 @@ var black_keywords=["inline",
 
 function counted_element_walker(elm,orig){
     count_element_walker++;
+    window.addEventListener("scroll", function (event) {
+        event.stopPropagation();
+    }, true);
     //console.log("check number "+count_element_walker+" from: "+orig);
     element_walker(elm);
 }
@@ -892,11 +895,12 @@ function keyword_walker(keyword_list){
 function element_walker(elm) {
     //if (elm instanceof Element) if (ignore_tags.indexOf(elm.tagName.toString()) > -1) return;
     var node;
+
     if(elm instanceof Element && ignore_tags.indexOf(elm.tagName.toString()) == -1 && getComputedStyle(elm)) {
-                                if (/*(getComputedStyle(elm).getPropertyValue("position") == "absolute") ||*/
-                                    (getComputedStyle(elm).getPropertyValue("position") == "fixed")/* || */
-                                    /*(getComputedStyle(elm).getPropertyValue("position") == "relative") ||*/
-                                    /*(getComputedStyle(elm).getPropertyValue("top") != "")*/) {
+        if (/*(getComputedStyle(elm).getPropertyValue("position") == "absolute") ||*/
+            (getComputedStyle(elm).getPropertyValue("position") == "fixed")/* || */
+            /*(getComputedStyle(elm).getPropertyValue("position") == "relative")*//* ||*/
+            /*(getComputedStyle(elm).getPropertyValue("top") != "")*/) {
 
         var keyword_list =[];
         keyword_list=elm.className.toString().split(' ');
