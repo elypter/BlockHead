@@ -3,12 +3,19 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version     4
-// @grant none
+// @version     7
+// @grant    GM.getValue
+// @grant    GM.setValue
+// @grant unsafeWindow
+// @xhr-include *
 // @author elypter
 // @downloadURL https://raw.githubusercontent.com/elypter/BlockHead/master/blockhead.user.js
 // @updateURL https://raw.githubusercontent.com/elypter/BlockHead/master/blockhead.user.js
+
 // ==/UserScript==
+
+// require https://raw.githubusercontent.com/elypter/Super-GM_setValue/master/super-gm_setvalue.user.js
+
 
 //This script blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 //It checks the computed style of each element. if the position attribute is fixed or absolute or ~relative~
@@ -840,6 +847,9 @@ function counted_element_walker(elm,orig){
 }
 
 function keyword_walker(keyword_list){
+    var white_names_counter={};
+    var black_keywords_counter={};
+
     //todo: switch order of for loops to detect whitelists earlier
     var state=-1;
     //console.log("list: ("+keyword_list.length+") "+keyword_list)
@@ -853,13 +863,15 @@ function keyword_walker(keyword_list){
                 for (var l=0; l < white_names.length; l++){
                     //console.log("test white: l:"+white_names[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
                     if (subsubword_list[k].indexOf(white_names[l]) != -1){
-                        //console.log("whitelisted: l:"+white_names[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
+                        console.log("whitelisted: l:"+white_names[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
+                        white_names_counter[white_names[l]]++;
                         return 0;
                     }
                 }
                 for (var l=0; l < black_keywords.length; l++){
                     if (subsubword_list[k].indexOf(black_keywords[l]) != -1){
-                        //console.log("matched: l:"+black_keywords[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
+                        console.log("matched: l:"+black_keywords[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
+                        black_keywords_counter[black_keywords[l]]++;
                         state = 1;
                     }
                 }
@@ -867,6 +879,13 @@ function keyword_walker(keyword_list){
         }
     }
     //console.log("state: "+state+" of "+keyword_list);
+
+    //GM_setValue ("test", "123");
+    //alert(GM_getValue ("test"));
+    //GM_SuperValue.set ("white_names_counter", white_names_counter);
+    //var x = GM_SuperValue.get ("white_names_counter", white_names_counter);
+
+
     return state;
 }
 
@@ -875,9 +894,10 @@ function element_walker(elm) {
     var node;
     if(elm instanceof Element && ignore_tags.indexOf(elm.tagName.toString()) == -1 && getComputedStyle(elm)) {
                                 if (/*(getComputedStyle(elm).getPropertyValue("position") == "absolute") ||*/
-                                    (getComputedStyle(elm).getPropertyValue("position") == "fixed") ||
+                                    (getComputedStyle(elm).getPropertyValue("position") == "fixed")/* || */
                                     /*(getComputedStyle(elm).getPropertyValue("position") == "relative") ||*/
-                                    (getComputedStyle(elm).getPropertyValue("top") != "")) {
+                                    /*(getComputedStyle(elm).getPropertyValue("top") != "")*/) {
+
         var keyword_list =[];
         keyword_list=elm.className.toString().split(' ');
         if (typeof(elm.id)=="string"&&elm.id!="") keyword_list.push([elm.id]);
@@ -889,7 +909,7 @@ function element_walker(elm) {
         var rule;
         var class_list=elm.className.toString().split(' '); //check for rule writing
         if (has_matched==1){
-            //console.log("pinning sticky: "+elm.id+","+elm.className+","+elm.tagName);
+            console.log("pinning sticky: "+elm.id+","+elm.className+","+elm.tagName);
 
             if (elm.id){
                 rule=window.location.hostname+"###"+elm.id+":style(position: "+"fixed"+" !important;)";
@@ -933,12 +953,14 @@ function element_walker(elm) {
             element_walker(node);
         }
     }
+
+
 }
 
 function style_walker() {
     //this alternative mode of searching and modifying sticky elements by searching stylesheets directly
     //although i thought stylesheet checking would be faster it tends be slower and cannot be performed on external stylesheets
-    
+
     var state=0;
     count_style_walking++;
     //console.log("checking stylesheets for the "+count_style_walking+"th time");
@@ -951,11 +973,12 @@ function style_walker() {
         //this will throw an error if the stylesheet is hosted on an external server because of cross site protection
         //these stylesheets cannot be processed at them moment/or never
         var classes;
-        try{ if (document.styleSheets[i].cssRules){
+        if (document.styleSheets[i].cssRules){
             classes=document.styleSheets[i].cssRules;
         }else if (document.styleSheets[i].rules){
             classes=document.styleSheets[i].rules;
-        }}catch(e){}
+        }//}catch(e){}
+        if (!classes) continue;
 
         for (var j = 0; j < classes.length; j++) {
             //console.log("checking class "+classes[x].selectorText);
