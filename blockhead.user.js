@@ -3,7 +3,7 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version     8
+// @version     9
 // @grant    GM.getValue
 // @grant    GM.setValue
 // @grant unsafeWindow
@@ -29,7 +29,7 @@
 
 
 //id and classes that contain any of these keywords will not be modified
-var white_names = ["side","article","html5","story","main","left","right","content","account__section","container--wide","container__main","panel","body","gutter","embed","watch","background","middleContainer","drag-and-drop"];
+var white_names = ["side","guide","article","html5","story","main","left","right","content","account__section","container--wide","container__main","panel","body","gutter","embed","watch","background","middleContainer","drag-and-drop"];
 
 //tags that will not be cheked
 var ignore_tags = ["a","A","script","SCRIPT","body","BODY","li","LI","ul","UL","br","BR","h5","H5","b","B","strong","STRONG","svg","SVG","path","PATHH","h2","H2",
@@ -842,11 +842,13 @@ var black_keywords=["inline",
 
 function counted_element_walker(elm,orig){
     count_element_walker++;
+
+    //this disables all javascript that is being triggered when scrolling
     window.addEventListener("scroll", function (event) {
         event.stopPropagation();
     }, true);
-    //console.log("check number "+count_element_walker+" from: "+orig);
-    element_walker(elm);
+    console.log("check number "+count_element_walker+" from: "+orig);
+    element_walker_all(elm);
 }
 
 function keyword_walker(keyword_list){
@@ -883,22 +885,25 @@ function keyword_walker(keyword_list){
     }
     //console.log("state: "+state+" of "+keyword_list);
 
+    //todo: count how often each keyword is being matched to be able to make a better sorting in the future
     //GM_setValue ("test", "123");
     //alert(GM_getValue ("test"));
     //GM_SuperValue.set ("white_names_counter", white_names_counter);
     //var x = GM_SuperValue.get ("white_names_counter", white_names_counter);
 
-
     return state;
 }
 
-function element_walker(elm) {
-    //if (elm instanceof Element) if (ignore_tags.indexOf(elm.tagName.toString()) > -1) return;
-    var node;
-
+function element_walker_all(startElem) {
+    //walk over element list as opposed to an element tree
+    var elms = startElem.getElementsByTagName("*");
+    for (var x = elms.length; x--;) {
+        elm=elms[x];
+    //console.log("checking: "+elm.tagName.toString());
     if(elm instanceof Element && ignore_tags.indexOf(elm.tagName.toString()) == -1 && getComputedStyle(elm)) {
+        //console.log("testing: "+elm.tagName.toString()+" with position= "+getComputedStyle(elm).getPropertyValue("position").toLowerCase());
         if (/*(getComputedStyle(elm).getPropertyValue("position") == "absolute") ||*/
-            (getComputedStyle(elm).getPropertyValue("position") == "fixed")/* || */
+            (getComputedStyle(elm).getPropertyValue("position").toLowerCase() == "fixed")/* || */
             /*(getComputedStyle(elm).getPropertyValue("position") == "relative")*//* ||*/
             /*(getComputedStyle(elm).getPropertyValue("top") != "")*/) {
 
@@ -913,7 +918,72 @@ function element_walker(elm) {
         var rule;
         var class_list=elm.className.toString().split(' '); //check for rule writing
         if (has_matched==1){
-            console.log("pinning sticky: "+elm.id+","+elm.className+","+elm.tagName);
+            //console.log("pinning sticky: "+elm.id+","+elm.className+","+elm.tagName);
+
+            if (elm.id){
+                rule=window.location.hostname+"###"+elm.id+":style(position: "+"fixed"+" !important;)";
+                if(generated_rules.indexOf(rule)==-1){
+                    generated_rules.push(rule);
+                    console.log(rule);
+                }
+            }
+            if(elm.className){
+                for (var i=0; i < class_list.length; i++){
+                    rule=window.location.hostname+"##."+class_list[i]+":style(position: "+"fixed" +" !important;)";
+                    if(generated_rules.indexOf(rule)==-1){
+                        generated_rules.push(rule);
+                        console.log(rule);
+                    }
+                }
+            }
+            elm.setAttribute('style', 'position:static !important');
+            elm.style.removeProperty('top');
+            //return;
+        }else if(has_matched==0){
+            if(elm.className){
+                for (var j=0; j < class_list.length; j++){
+                    rule="@@"+window.location.hostname+"##."+class_list[j];
+                    if(generated_rules.indexOf(rule)==-1){
+                        generated_rules.push(rule);
+                        console.log(rule);
+                    }
+                }
+            }
+            //return;
+        }else{
+            //console.log("ignoring sticky: "+elm.id+","+elm.className+","+elm.tagName);
+        }
+        }
+    }
+
+
+
+    }
+}
+
+function element_walker(elm) {
+    //walk over element list as opposed to an element tree
+    var node;
+    //console.log("checking: "+elm.tagName.toString());
+    if(elm instanceof Element && ignore_tags.indexOf(elm.tagName.toString()) == -1 && getComputedStyle(elm)) {
+        //console.log("testing: "+elm.tagName.toString()+" with position= "+getComputedStyle(elm).getPropertyValue("position").toLowerCase());
+        if (/*(getComputedStyle(elm).getPropertyValue("position") == "absolute") ||*/
+            (getComputedStyle(elm).getPropertyValue("position").toLowerCase() == "fixed")/* || */
+            /*(getComputedStyle(elm).getPropertyValue("position") == "relative")*//* ||*/
+            /*(getComputedStyle(elm).getPropertyValue("top") != "")*/) {
+
+        var keyword_list =[];
+        keyword_list=elm.className.toString().split(' ');
+        if (typeof(elm.id)=="string"&&elm.id!="") keyword_list.push([elm.id]);
+
+        var has_matched=-1;
+        if (keyword_list!=[]&&keyword_list!=[""]){
+            has_matched=keyword_walker(keyword_list);
+        }
+        var rule;
+        var class_list=elm.className.toString().split(' '); //check for rule writing
+        if (has_matched==1){
+            //console.log("pinning sticky: "+elm.id+","+elm.className+","+elm.tagName);
 
             if (elm.id){
                 rule=window.location.hostname+"###"+elm.id+":style(position: "+"fixed"+" !important;)";
