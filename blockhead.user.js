@@ -3,7 +3,7 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version     9
+// @version     10
 // @grant    GM.getValue
 // @grant    GM.setValue
 // @grant unsafeWindow
@@ -29,7 +29,9 @@
 
 
 //id and classes that contain any of these keywords will not be modified
-var white_names = ["side","guide","article","html5","story","main","left","right","content","account__section","container--wide","container__main","panel","body","gutter","embed","watch","background","middleContainer","drag-and-drop"];
+var white_names = ["side","guide","article","html5","story","main","left","right","content","account__section","container--wide","container__main","panel",
+                   "body","gutter","embed","watch","background","middleContainer","drag-and-drop"];
+//var white_names = ["example-whitelist-entry"];
 
 //tags that will not be cheked
 var ignore_tags = ["a","A","script","SCRIPT","body","BODY","li","LI","ul","UL","br","BR","h5","H5","b","B","strong","STRONG","svg","SVG","path","PATHH","h2","H2",
@@ -839,7 +841,6 @@ var black_keywords=["inline",
 "lockfixed",
 "breadcrumb"];
 
-
 function counted_element_walker(elm,orig){
     count_element_walker++;
 
@@ -857,13 +858,13 @@ function keyword_walker(keyword_list){
 
     //todo: switch order of for loops to detect whitelists earlier
     var state=-1;
-    //console.log("list: ("+keyword_list.length+") "+keyword_list)
+    console.log("list: ("+keyword_list.length+") "+keyword_list);
     for (var i=0; i < keyword_list.length; i++){
         var subword_list=keyword_list[i].toString().split('-');
-        //console.log("sublen of: "+subword_list+" from "+keyword_list[i]+" = "+subword_list.length);
+        console.log("sublen of: "+subword_list+" from "+keyword_list[i]+" = "+subword_list.length);
         for (var j=0; j < subword_list.length; j++){
             var subsubword_list=subword_list[j].split('_');
-            //console.log("subsublen of: "+subsubword_list+" from "+subword_list[j]+" = "+subsubword_list.length);
+            console.log("subsublen of: "+subsubword_list+" from "+subword_list[j]+" = "+subsubword_list.length);
             for (var k=0; k < subsubword_list.length; k++){
                 for (var l=0; l < white_names.length; l++){
                     //console.log("test white: l:"+white_names[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
@@ -899,9 +900,9 @@ function element_walker_all(startElem) {
     var elms = startElem.getElementsByTagName("*");
     for (var x = elms.length; x--;) {
         elm=elms[x];
-    //console.log("checking: "+elm.tagName.toString());
+    console.log("checking: "+elm.tagName.toString());
     if(elm instanceof Element && ignore_tags.indexOf(elm.tagName.toString()) == -1 && getComputedStyle(elm)) {
-        //console.log("testing: "+elm.tagName.toString()+" with position= "+getComputedStyle(elm).getPropertyValue("position").toLowerCase());
+        console.log("testing: "+elm.tagName.toString()+" with position= "+getComputedStyle(elm).getPropertyValue("position").toLowerCase());
         if (/*(getComputedStyle(elm).getPropertyValue("position") == "absolute") ||*/
             (getComputedStyle(elm).getPropertyValue("position").toLowerCase() == "fixed")/* || */
             /*(getComputedStyle(elm).getPropertyValue("position") == "relative")*//* ||*/
@@ -910,9 +911,11 @@ function element_walker_all(startElem) {
         var keyword_list =[];
         keyword_list=elm.className.toString().split(' ');
         if (typeof(elm.id)=="string"&&elm.id!="") keyword_list.push([elm.id]);
+        if (typeof(elm.tagName)=="string"&&elm.tagName!="") keyword_list.push([elm.tagName]);
 
         var has_matched=-1;
         if (keyword_list!=[]&&keyword_list!=[""]){
+            //compare against black and whitelist
             has_matched=keyword_walker(keyword_list);
         }
         var rule;
@@ -1082,6 +1085,9 @@ function style_walker() {
 // Kick it off starting with the `body` element
 if(walk_styles) style_walker();
 if(walk_elements) counted_element_walker(document.body,"onstart");
+
+// check elements again if the page code changes
+if(walk_elements) document.onload = counted_element_walker(document.body,"onload");
 
 // check elements again if the page code changes
 if(walk_elements) document.onchange = counted_element_walker(document.body,"onchange");
