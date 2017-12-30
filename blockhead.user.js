@@ -3,7 +3,7 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version     11
+// @version     13
 // @grant    GM.getValue
 // @grant    GM.setValue
 // @grant    GM_getValue
@@ -40,13 +40,28 @@ var white_names = ["side","guide","article","html5","story","main","left","right
 var ignore_tags = ["a","A","script","SCRIPT","body","BODY","li","LI","ul","UL","br","BR","h5","H5","b","B","strong","STRONG","svg","SVG","path","PATHH","h2","H2",
                    "code","CODE","tr","TR","td","TD","h3","H3","h1","H1","h4","H4"];//,"noscript","NOSCRIPT"
 
-var mutation_check=true; //search for floating elements that get added after page load.
-var substring_search=true; //cannot be switched off anymore.
-
 var count_element_walker=0; //debug:counts how often a page check is triggered
 var count_style_walking=0; //debug:counts how often checking stylesheets is triggered
-var walk_elements=true; //all elements of a site will be checked individually for their computed style and changed if there is a match
-var walk_styles=false; //all stylesheets will be checked for classes and changed if there is a match
+
+//search for floating elements that get added after page load.
+var mutation_check=GM_SuperValue.get ("mutation_check")==true?GM_SuperValue.get ("mutation_check"):1; //1=yes 2=no change value in memory tab
+GM_SuperValue.set ("mutation_check",mutation_check);
+
+//all elements of a site will be checked individually for their computed style and changed if there is a match
+var walk_elements=GM_SuperValue.get ("walk_elements")==true?GM_SuperValue.get ("walk_elements"):1; //1=yes 2=no change value in memory tab
+GM_SuperValue.set ("walk_elements",walk_elements);
+
+//all stylesheets will be checked for classes and changed if there is a match
+var walk_styles=GM_SuperValue.get ("walk_styles")==true?GM_SuperValue.get ("walk_styles"):0; //1=yes 2=no change value in memory tab
+GM_SuperValue.set ("walk_styles",walk_styles);
+
+//this will save the statistics of how often a keyword is being matched in a local variable that can be viewed in the memory tab
+var save_keyword_statistics=GM_SuperValue.get ("save_keyword_statistics")==true?GM_SuperValue.get ("save_keyword_statistics"):0; //1=yes 2=no change value in memory tab
+GM_SuperValue.set ("save_keyword_statistics",save_keyword_statistics);
+
+//this will save the rules generated based on the blocking in a local variable that can be viewed in the memory tab
+var save_generated_rules=GM_SuperValue.get ("save_generated_rules")==true?GM_SuperValue.get ("save_generated_rules"):0; //1=yes 2=no change value in memory tab
+GM_SuperValue.set ("save_generated_rules",save_generated_rules);
 
 //contained in black_keywords.js
 //var black_keywords //list generated with rule_keyword_generator from webannoyances ultralist
@@ -303,22 +318,65 @@ function style_walker() {
     }
 }
 
+// show saved rules when opening a location containing "bloackhead-rules"
+if(window.location.toString().indexOf("blockhead-rules")!=-1){
+    var iDiv = document.createElement('div');
+    iDiv.id = 'blockhead-rules';
+    iDiv.style.margin = '0 auto';
+    iDiv.style.position= "absolute";
+    iDiv.style.backgroundColor ="white";
+    iDiv.style.zIndex=9001000;
+    iDiv.style.opacity=1;
+    document.getElementsByTagName('body')[0].appendChild(iDiv);
+
+    rules=GM_SuperValue.get ("generated_rules");
+    for(var i=0;i<rules.length;i++){
+        iDiv.innerHTML+=rules[i]+'<br/>\n';
+    }
+    throw new Error('This is not an error. This is just to abort javascript');
+}
+// show saved rules when opening a location containing "bloackhead-statistics"
+if(window.location.toString().indexOf("blockhead-statistics")!=-1){
+    var iDiv = document.createElement('div');
+    iDiv.id = 'blockhead-statistics';
+    iDiv.style.margin = '0 auto';
+    iDiv.style.position= "absolute";
+    iDiv.style.backgroundColor ="white";
+    iDiv.style.zIndex=9001000;
+    iDiv.style.opacity=1;
+    document.getElementsByTagName('body')[0].appendChild(iDiv);
+
+    iDiv.innerHTML='#white_names_counter:<br/>\ņ';
+    rules=GM_SuperValue.get ("white_names_counter");
+    for (var key in rules) {
+        iDiv.innerHTML+=key+": "+rules[key]+'<br/>\n';
+    }
+    iDiv.innerHTML+='<br/>\n############<br/>\n<br/>\n';
+    iDiv.innerHTML+='#black_keyword_counter:<br/>\ņ';
+    rules=GM_SuperValue.get ("black_keywords_counter");
+    for (var key in rules) {
+        iDiv.innerHTML+=key+": "+rules[key]+'<br/>\n';
+    }
+    throw new Error('This is not an error. This is just to abort javascript');
+}
 
 // Kick it off starting with the `body` element
-if(walk_styles) style_walker();
-if(walk_elements) counted_element_walker(document.body,"onstart");
+if(walk_styles==1) style_walker();
+if(walk_elements==1) counted_element_walker(document.body,"onstart");
 
 // check elements again if the page code changes
-if(walk_elements) document.onload = counted_element_walker(document.body,"onload");
+if(walk_elements==1) document.onload = counted_element_walker(document.body,"onload");
 
 // check elements again if the page code changes
-if(walk_elements) document.onchange = counted_element_walker(document.body,"onchange");
+if(walk_elements==1) document.onchange = counted_element_walker(document.body,"onchange");
 
 // check elements again if the user scrolls the page(doesnt really do anything)
-if(walk_elements) document.onscroll = counted_element_walker(document.body,"onscroll");
+if(walk_elements==1) document.onscroll = counted_element_walker(document.body,"onscroll");
+
+
 
 //check if the dom is modified and checks the changed elements again
-if(mutation_check && walk_elements){
+if(mutation_check==1 && walk_elements==1){
     MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
 
     // define a new observer
