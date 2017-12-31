@@ -3,18 +3,19 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version     13
+// @version     15
 // @grant    GM.getValue
 // @grant    GM.setValue
 // @grant    GM_getValue
 // @grant    GM_setValue
-// @grant unsafeWindow
+// @grant GM_getResourceText
+// @grant GM.getResourceText
 // @xhr-include *
 // @author elypter
 // @downloadURL https://raw.githubusercontent.com/elypter/BlockHead/master/blockhead.user.js
 // @updateURL https://raw.githubusercontent.com/elypter/BlockHead/master/blockhead.user.js
-// @require https://raw.githubusercontent.com/elypter/Super-GM_setValue/master/super-gm_setvalue.user.js
-// @require https://raw.githubusercontent.com/elypter/BlockHead/master/black_keywords.js
+// @require https://greasyfork.org/scripts/36900-super-gm-setvalue-and-gm-getvalue-lib/code/Super_GM_setValue_and_GM_getValue%20lib.user.js
+// @resource black_keywords https://raw.githubusercontent.com/elypter/rule_keyword_generator/master/generic_rule_keywords.txt
 // ==/UserScript==
 
 
@@ -63,8 +64,8 @@ GM_SuperValue.set ("save_keyword_statistics",save_keyword_statistics);
 var save_generated_rules=GM_SuperValue.get ("save_generated_rules")==true?GM_SuperValue.get ("save_generated_rules"):0; //1=yes 2=no change value in memory tab
 GM_SuperValue.set ("save_generated_rules",save_generated_rules);
 
-//contained in black_keywords.js
-//var black_keywords //list generated with rule_keyword_generator from webannoyances ultralist
+//contained in black_keywords.txt
+var black_keywords=GM_getResourceText("black_keywords").toString().split("\n"); //list generated with rule_keyword_generator from webannoyances ultralist
 
 function counted_element_walker(elm,orig){
     count_element_walker++;
