@@ -3,13 +3,14 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version     15
-// @grant    GM.getValue
-// @grant    GM.setValue
-// @grant    GM_getValue
-// @grant    GM_setValue
+// @version 16
+// @grant GM.getValue
+// @grant GM.setValue
+// @grant GM_getValue
+// @grant GM_setValue
 // @grant GM_getResourceText
 // @grant GM.getResourceText
+// @require https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @xhr-include *
 // @author elypter
 // @downloadURL https://raw.githubusercontent.com/elypter/BlockHead/master/blockhead.user.js
@@ -20,17 +21,26 @@
 
 
 
+/*
+Do you also get annoyed by all those pointless sticky headers with pointless logos, hamburger menus and no particular functionality that can wait for you to scroll up? are you getting flashbacks from your grandmas internet explorer with 10 toolbars installed? do you find it absurd that screens are getting bigger and bigger but there is less and less content to see?
+Then get ready to claim back some of that space with this userscript that blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down to the background of the website. everything is staying acessible but it wont creep up on you like a creeping shower curtain anymore when scrolling.
+It checks the computed style of each element. if the position attribute is "fixed" then it checks if its tagname, id or class names contain any keywords provided by the list below. https://raw.githubusercontent.com/elypter/BlockHead/master/black_keywords.js
+this list is being created with this tool https://github.com/elypter/rule_keyword_generator by parsing the rules of https://raw.githubusercontent.com/yourduskquibbles/webannoyances/master/ultralist.txt for class names and ids.
+There is also a whitelist for certain keywords and tag names to reduce flase positives and processing time.
 
-//This script blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
-//It checks the computed style of each element. if the position attribute is fixed or absolute or ~relative~
-//then it checks if its id or classes names contain provided in the list below.
-//this list is created with theis tool https://github.com/elypter/rule_keyword_generator by parsing the rules https://raw.githubusercontent.com/yourduskquibbles/webannoyances/master/ultralist.txt
-//for class names and ids.
-//There is also a whitelist for certain keywords and tag names to reduce flase positives and processing time.
-//currently the processing time is quite high because each element has to be checked and many have to be checked against the whole list.
-//on an old laptop it can take up to single digit seconds so pageloadtime noticable increases.
-//License: GPL3
+on an 10 year old laptop it can take up 100-200ms or more in extreme cases so the performance aspect is not completely neglegtible but also not a deal breaker.
+there is also the option to save automatically generated rules to disk by switching on the save_generated_rules variable in the memory tab of tampermonkey and later putting "blockhead.rules" into the url of any website. the rules will be displayed on the site on a simple div layer so you can copy them where you like. for example into an adbloker or you could help out yourduskquibbles with his webannoyances ultralist https://github.com/yourduskquibbles/webannoyances/issues
+https://github.com/elypter/BlockHead/ License: GPL3
+*/
 
+//this style will be added to all elements that this script detects as sticky annoyances.
+var stylefix = 'position:relative !important';
+
+var count_element_walker=0; //debug:counts how often a page check is triggered
+var count_style_walking=0; //debug:counts how often checking stylesheets is triggered
+
+//contained in black_keywords.txt
+var black_keywords=GM_getResourceText("black_keywords").toString().split("\n"); //list generated with rule_keyword_generator from webannoyances ultralist
 
 //id and classes that contain any of these keywords will not be modified
 var white_names = ["side","guide","article","html5","story","main","left","right","content","account__section","container--wide","container__main","panel",
@@ -41,8 +51,9 @@ var white_names = ["side","guide","article","html5","story","main","left","right
 var ignore_tags = ["a","A","script","SCRIPT","body","BODY","li","LI","ul","UL","br","BR","h5","H5","b","B","strong","STRONG","svg","SVG","path","PATHH","h2","H2",
                    "code","CODE","tr","TR","td","TD","h3","H3","h1","H1","h4","H4"];//,"noscript","NOSCRIPT"
 
-var count_element_walker=0; //debug:counts how often a page check is triggered
-var count_style_walking=0; //debug:counts how often checking stylesheets is triggered
+//debug switch. if on it prints out information in the java script console.
+var debug=GM_SuperValue.get ("debug")==true?GM_SuperValue.get ("debug"):0; //1=yes 2=no 3=intense change value in memory tab
+GM_SuperValue.set ("debug",debug);
 
 //search for floating elements that get added after page load.
 var mutation_check=GM_SuperValue.get ("mutation_check")==true?GM_SuperValue.get ("mutation_check"):1; //1=yes 2=no change value in memory tab
@@ -64,8 +75,7 @@ GM_SuperValue.set ("save_keyword_statistics",save_keyword_statistics);
 var save_generated_rules=GM_SuperValue.get ("save_generated_rules")==true?GM_SuperValue.get ("save_generated_rules"):0; //1=yes 2=no change value in memory tab
 GM_SuperValue.set ("save_generated_rules",save_generated_rules);
 
-//contained in black_keywords.txt
-var black_keywords=GM_getResourceText("black_keywords").toString().split("\n"); //list generated with rule_keyword_generator from webannoyances ultralist
+
 
 function counted_element_walker(elm,orig){
     count_element_walker++;
@@ -76,9 +86,9 @@ function counted_element_walker(elm,orig){
     }, true);
     console.log("check number "+count_element_walker+" from: "+orig);
     element_walker_all(elm);
-    //console.log(GM_SuperValue.get ("white_names_counter"));
-    //console.log(GM_SuperValue.get ("black_keywords_counter"));
-    //console.log(GM_SuperValue.get ("generated_rules"));
+    if (debug==3) console.log(GM_SuperValue.get ("white_names_counter"));
+    if (debug==3) console.log(GM_SuperValue.get ("black_keywords_counter"));
+    if (debug==3) console.log(GM_SuperValue.get ("generated_rules"));
 }
 
 function keyword_walker(keyword_list){
@@ -87,18 +97,18 @@ function keyword_walker(keyword_list){
 
     //todo: switch order of for loops to detect whitelists earlier
     var state=-1;
-    //console.log("list: ("+keyword_list.length+") "+keyword_list);
+    if (debug==3) console.log("list: ("+keyword_list.length+") "+keyword_list);
     for (var i=0; i < keyword_list.length; i++){
         var subword_list=keyword_list[i].toString().split('-');
-        //console.log("sublen of: "+subword_list+" from "+keyword_list[i]+" = "+subword_list.length);
+        if (debug==3) console.log("sublen of: "+subword_list+" from "+keyword_list[i]+" = "+subword_list.length);
         for (var j=0; j < subword_list.length; j++){
             var subsubword_list=subword_list[j].split('_');
-            //console.log("subsublen of: "+subsubword_list+" from "+subword_list[j]+" = "+subsubword_list.length);
+            if (debug==3) console.log("subsublen of: "+subsubword_list+" from "+subword_list[j]+" = "+subsubword_list.length);
             for (var k=0; k < subsubword_list.length; k++){
                 for (var l=0; l < white_names.length; l++){
-                    //console.log("test white: l:"+white_names[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
+                    if (debug==3) console.log("test white: l:"+white_names[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
                     if (subsubword_list[k].indexOf(white_names[l]) != -1){
-                        //console.log("whitelisted: l:"+white_names[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
+                        if (debug==3) console.log("whitelisted: l:"+white_names[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
                         if(white_names_counter[white_names[l]]) white_names_counter[white_names[l]]++;
                         else white_names_counter[white_names[l]]=1;
                         GM_SuperValue.set ("white_names_counter", white_names_counter);
@@ -107,7 +117,7 @@ function keyword_walker(keyword_list){
                 }
                 for (var l=0; l < black_keywords.length; l++){
                     if (subsubword_list[k].indexOf(black_keywords[l]) != -1){
-                        console.log("matched: l:"+black_keywords[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
+                        if (debug==3||debug==1) console.log("matched: l:"+black_keywords[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
                         if(black_keywords_counter[black_keywords[l]]) black_keywords_counter[black_keywords[l]]++;
                         else black_keywords_counter[black_keywords[l]]=1;
                         state = 1;
@@ -130,9 +140,9 @@ function element_walker_all(startElem) {
     var elms = startElem.getElementsByTagName("*");
     for (var x = elms.length; x--;) {
         elm=elms[x];
-    //console.log("checking: "+elm.tagName.toString());
+    if (debug==3) console.log("checking: "+elm.tagName.toString());
     if(elm instanceof Element && ignore_tags.indexOf(elm.tagName.toString()) == -1 && getComputedStyle(elm)) {
-        //console.log("testing: "+elm.tagName.toString()+" with position= "+getComputedStyle(elm).getPropertyValue("position").toLowerCase());
+        if (debug==3) console.log("testing: "+elm.tagName.toString()+" with position= "+getComputedStyle(elm).getPropertyValue("position").toLowerCase());
         if (/*(getComputedStyle(elm).getPropertyValue("position") == "absolute") ||*/
             (getComputedStyle(elm).getPropertyValue("position").toLowerCase() == "fixed")/* || */
             /*(getComputedStyle(elm).getPropertyValue("position") == "relative")*//* ||*/
@@ -151,7 +161,7 @@ function element_walker_all(startElem) {
         var rule;
         var class_list=elm.className.toString().split(' '); //check for rule writing
         if (has_matched==1){
-            console.log("pinning sticky: "+elm.id+","+elm.className+","+elm.tagName);
+            if (debug==3||debug==1) console.log("pinning sticky: "+elm.id+","+elm.className+","+elm.tagName);
 
             if (elm.id){
                 rule=window.location.hostname+"###"+elm.id+":style(position: "+"fixed"+" !important;)";
@@ -169,7 +179,7 @@ function element_walker_all(startElem) {
                     }
                 }
             }
-            elm.setAttribute('style', 'position:static !important');
+            elm.setAttribute('style', stylefix);
             elm.style.removeProperty('top');
             //return;
         }else if(has_matched==0){
@@ -189,9 +199,9 @@ function element_walker_all(startElem) {
                     }
                 }
             }
-            console.log("whitelisted sticky: "+elm.id+","+elm.className+","+elm.tagName);
+            if (debug==3||debug==1) console.log("whitelisted sticky: "+elm.id+","+elm.className+","+elm.tagName);
         }else{
-            console.log("ignoring sticky: "+elm.id+","+elm.className+","+elm.tagName);
+            if (debug==3||debug==1) console.log("ignoring sticky: "+elm.id+","+elm.className+","+elm.tagName);
         }
         }
     }
@@ -224,13 +234,13 @@ function element_walker(elm) {
         var rule;
         var class_list=elm.className.toString().split(' '); //check for rule writing
         if (has_matched==1){
-            //console.log("pinning sticky: "+elm.id+","+elm.className+","+elm.tagName);
+            if (debug==3) console.log("pinning sticky: "+elm.id+","+elm.className+","+elm.tagName);
 
             if (elm.id){
                 rule=window.location.hostname+"###"+elm.id+":style(position: "+"fixed"+" !important;)";
                 if(generated_rules.indexOf(rule)==-1){
                     generated_rules.push(rule);
-                    console.log(rule);
+                    if (debug==3||debug==1) console.log(rule);
                 }
             }
             if(elm.className){
@@ -238,11 +248,11 @@ function element_walker(elm) {
                     rule=window.location.hostname+"##."+class_list[i]+":style(position: "+"fixed" +" !important;)";
                     if(generated_rules.indexOf(rule)==-1){
                         generated_rules.push(rule);
-                        console.log(rule);
+                        if (debug==3||debug==1) console.log(rule);
                     }
                 }
             }
-            elm.setAttribute('style', 'position:static !important');
+            elm.setAttribute('style', stylefix);
             elm.style.removeProperty('top');
             //return;
         }else if(has_matched==0){
@@ -251,13 +261,13 @@ function element_walker(elm) {
                     rule="@@"+window.location.hostname+"##."+class_list[j];
                     if(generated_rules.indexOf(rule)==-1){
                         generated_rules.push(rule);
-                        console.log(rule);
+                        if (debug==3||debug==1) console.log(rule);
                     }
                 }
             }
             //return;
         }else{
-            //console.log("ignoring sticky: "+elm.id+","+elm.className+","+elm.tagName);
+            if (debug==3) console.log("ignoring sticky: "+elm.id+","+elm.className+","+elm.tagName);
         }
         }
     }
@@ -278,7 +288,7 @@ function style_walker() {
 
     var state=0;
     count_style_walking++;
-    //console.log("checking stylesheets for the "+count_style_walking+"th time");
+    if (debug==3) console.log("checking stylesheets for the "+count_style_walking+"th time");
     var styleSheets = window.document.styleSheets;
 
     for(var i = 0; i < styleSheets.length; i++){
@@ -296,19 +306,19 @@ function style_walker() {
         if (!classes) continue;
 
         for (var j = 0; j < classes.length; j++) {
-            //console.log("checking class "+classes[x].selectorText);
+            if (debug==3) console.log("checking class "+classes[x].selectorText);
             state=0;
             for (var k=0; k < black_keywords.length; k++){
                 if (classes[j].selectorText) if (classes[j].selectorText.indexOf(black_keywords[k])!=-1){
-                    //console.log("matched: l:"+black_keywords[k]+" in s:"+classes[j].selectorText+" of "+styleSheets[i].sheet);
-                    if (classes[j].position=="absolute" ||classes[j].position=="static"){
+                    if (debug==3) console.log("matched: l:"+black_keywords[k]+" in s:"+classes[j].selectorText+" of "+styleSheets[i].sheet);
+                    if (classes[j].position=="absolute" ||classes[j].position=="fixed"){
                         state = 1;
                     }
                 }
             }
             for (var k=0; k < white_names.length; k++){
                 if (classes[j].selectorText) if (classes[j].selectorText.indexOf(white_names[k])!=-1){
-                    //console.log("whitelisted: l:"+white_names[k]+" in s:"+classes[j].selectorText+" of "+styleSheets[i].sheet);
+                    if (debug==3) console.log("whitelisted: l:"+white_names[k]+" in s:"+classes[j].selectorText+" of "+styleSheets[i].sheet);
                     state=0;
                 }
             }
