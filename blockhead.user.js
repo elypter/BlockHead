@@ -3,7 +3,7 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version 16
+// @version 17
 // @grant GM.getValue
 // @grant GM.setValue
 // @grant GM_getValue
@@ -16,7 +16,7 @@
 // @downloadURL https://raw.githubusercontent.com/elypter/BlockHead/master/blockhead.user.js
 // @updateURL https://raw.githubusercontent.com/elypter/BlockHead/master/blockhead.user.js
 // @require https://greasyfork.org/scripts/36900-super-gm-setvalue-and-gm-getvalue-lib/code/Super_GM_setValue_and_GM_getValue%20lib.user.js
-// @resource black_keywords https://raw.githubusercontent.com/elypter/rule_keyword_generator/master/generic_rule_keywords.txt
+// @resource black_keywords https://github.com/elypter/filter_processor/raw/master/rules/generic_rule_keywords.txt
 // ==/UserScript==
 
 
