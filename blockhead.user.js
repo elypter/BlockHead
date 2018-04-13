@@ -3,7 +3,7 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version 18
+// @version 19
 // @grant GM.getValue
 // @grant GM.setValue
 // @grant GM_getValue
@@ -17,8 +17,6 @@
 // @require https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
 // @xhr-include *
 // @author elypter
-// @downloadURL https://raw.githubusercontent.com/elypter/BlockHead/master/blockhead.user.js
-// @updateURL https://raw.githubusercontent.com/elypter/BlockHead/master/blockhead.user.js
 // @require https://greasyfork.org/scripts/36900-super-gm-setvalue-and-gm-getvalue-lib/code/Super_GM_setValue_and_GM_getValue%20lib.user.js
 // @resource black_keywords https://github.com/elypter/filter_processor/raw/master/rules/generic_rule_keywords.txt
 // ==/UserScript==
@@ -33,7 +31,8 @@ this list is being created with this tool https://github.com/elypter/rule_keywor
 There is also a whitelist for certain keywords and tag names to reduce flase positives and processing time.
 
 on an 10 year old laptop it can take up 100-200ms or more in extreme cases so the performance aspect is not completely neglegtible but also not a deal breaker.
-there is also the option to save automatically generated rules to disk by switching on the save_generated_rules variable in the memory tab of tampermonkey and later putting "blockhead-rules" into the url of any website. the rules will be displayed on the site on a simple div layer so you can copy them where you like. for example into an adbloker or you could help out yourduskquibbles with his webannoyances ultralist https://github.com/yourduskquibbles/webannoyances/issues
+there is also the option to save automatically generated rules to disk by switching on the save_generated_rules variable in the memory tab of tampermonkey or violentmoneky and later putting "blockhead-rules" into the url of any website like https://example.com/?q=blockhead-rules the rules will be displayed on the site on a simple div layer so you can copy them where you like. for example into an adbloker or you could help out yourduskquibbles with his webannoyances ultralist https://github.com/yourduskquibbles/webannoyances/issues
+statistics of the keyword usage can be retrieved in the same way by using "blockhead-statistics" they have to be turned on first as well.
 https://github.com/elypter/BlockHead/ License: GPL3
 */
 
@@ -72,11 +71,11 @@ var walk_styles=GM_SuperValue.get ("walk_styles")==true?GM_SuperValue.get ("walk
 GM_SuperValue.set ("walk_styles",walk_styles);
 
 //this will save the statistics of how often a keyword is being matched in a local variable that can be viewed in the memory tab
-var save_keyword_statistics=GM_SuperValue.get ("save_keyword_statistics")==true?GM_SuperValue.get ("save_keyword_statistics"):0; //1=yes 2=no change value in memory tab
+var save_keyword_statistics=GM_SuperValue.get ("save_keyword_statistics")==true?GM_SuperValue.get ("save_keyword_statistics"):0; //1=yes 2=no change of value in memory tab
 GM_SuperValue.set ("save_keyword_statistics",save_keyword_statistics);
 
 //this will save the rules generated based on the blocking in a local variable that can be viewed in the memory tab
-var save_generated_rules=GM_SuperValue.get ("save_generated_rules")==true?GM_SuperValue.get ("save_generated_rules"):0; //1=yes 2=no change value in memory tab
+var save_generated_rules=GM_SuperValue.get ("save_generated_rules")==true?GM_SuperValue.get ("save_generated_rules"):0; //1=yes 2=no change of value in memory tab
 GM_SuperValue.set ("save_generated_rules",save_generated_rules);
 
 GM_registerMenuCommand("Copy generated rules to clipboard", "show_saved_generated_rules");
@@ -115,7 +114,7 @@ function keyword_walker(keyword_list){
                         if (debug==3) console.log("whitelisted: l:"+white_names[l]+" in s:"+subsubword_list[k]+" of "+keyword_list);
                         if(white_names_counter[white_names[l]]) white_names_counter[white_names[l]]++;
                         else white_names_counter[white_names[l]]=1;
-                        GM_SuperValue.set ("white_names_counter", white_names_counter);
+                        if (save_keyword_statistics==1) GM_SuperValue.set ("white_names_counter", white_names_counter);
                         return 0;
                     }
                 }
@@ -131,11 +130,11 @@ function keyword_walker(keyword_list){
         }
     }
 
-    GM_SuperValue.set ("black_keywords_counter", black_keywords_counter);
+    if (save_keyword_statistics==1) GM_SuperValue.set ("black_keywords_counter", black_keywords_counter);
     return state;
 }
 
-var generated_rules=GM_SuperValue.get ("generated_rules")||{}; //contains all adblock/ublock rules that the script creates based on what it modifies
+var generated_rules=GM_SuperValue.get ("generated_rules",[])||[]; //contains all adblock/ublock rules that the script creates based on what it modifies
 function element_walker_all(startElem) {
     //walk over element list as opposed to an element tree
     if (!(startElem instanceof Element)) return;
@@ -214,7 +213,9 @@ function element_walker_all(startElem) {
 
 
     }
-    GM_SuperValue.set ("generated_rules", generated_rules);
+    if (save_generated_rules==1){
+        GM_SuperValue.set ("generated_rules", generated_rules);
+    }
 }
 
 function element_walker(elm) {
@@ -336,10 +337,28 @@ function style_walker() {
 
 // show saved rules when opening a location containing "bloackhead-rules"
 if(window.location.toString().indexOf("blockhead-rules")!=-1){
-    text= show_saved_generated_rules();
-    GM_setClipboard(text, { type: 'text', mimetype: 'text/plain'});
+    show_saved_generated_rules()
+    copy_saved_generated_rules()
 
-/*
+}
+// show saved rules when opening a location containing "bloackhead-statistics"
+if(window.location.toString().indexOf("blockhead-statistics")!=-1){
+    show_saved_generated_statistics();
+    copy_saved_generated_statistics();
+}
+
+function copy_saved_generated_rules(){
+    var text
+    var s_rules=GM_SuperValue.get ("generated_rules")||[];
+    for(var i=0, len=generated_rules.length;i<len;i++){
+        //text+=s+'\n';
+        text+=generated_rules[i]+'\n';
+        //text+=rules[i]+'<br/>\n';
+    
+    GM_setClipboard(text, { type: 'text', mimetype: 'text/plain'});
+}
+
+function show_saved_generated_rules(){
     var iDiv = document.createElement('div');
     iDiv.id = 'blockhead-rules';
     iDiv.style.margin = '0 auto';
@@ -354,14 +373,38 @@ if(window.location.toString().indexOf("blockhead-rules")!=-1){
         iDiv.innerHTML+=rules[i]+'<br/>\n';
     }
     throw new Error('This is not an error. This is just to abort javascript');
-*/
 }
-// show saved rules when opening a location containing "bloackhead-statistics"
-if(window.location.toString().indexOf("blockhead-statistics")!=-1){
-    var text=show_saved_generated_statistics();
+
+function copy_saved_generated_statistics(){
+    var text;
+    text='#white_names_counter:\ņ';
+    var rules=GM_SuperValue.get ("white_names_counter");
+    for (var key in rules) {
+        text+=key+": "+rules[key]+'\n';
+    }
+    text+='\n############\n';
+    text+='#black_keyword_counter:\ņ';
+    rules=GM_SuperValue.get ("black_keywords_counter");
+    for (var key in rules) {
+        text+=key+": "+rules[key]+'\n';
+    }
     GM_setClipboard(text);
-/*
-    var iDiv = document.createElement('div');
+}
+  
+function show_saved_generated_statistics(){
+    var text;
+    text='#white_names_counter:<br/>\ņ';
+    var rules=GM_SuperValue.get ("white_names_counter");
+    for (var key in rules) {
+        text+=key+": "+rules[key]+'<br/>\n';
+    }
+    text+='<hr>\n';
+    text+='#black_keyword_counter:<br/>\ņ';
+    rules=GM_SuperValue.get ("black_keywords_counter");
+    for (var key in rules) {
+        text+=key+": "+rules[key]+'<br/>\n';
+    }
+        var iDiv = document.createElement('div');
     iDiv.id = 'blockhead-statistics';
     iDiv.style.margin = '0 auto';
     iDiv.style.position= "absolute";
@@ -373,34 +416,6 @@ if(window.location.toString().indexOf("blockhead-statistics")!=-1){
 
     iDiv.innerHTML=text;
     throw new Error('This is not an error. This is just to abort javascript');
-*/
-}
-
-function show_saved_generated_rules(){
-    var text="";
-    var s_rules=GM_SuperValue.get ("generated_rules")||[];
-    for(var i=0, len=generated_rules.length;i<len;i++){
-        //text+=s+'\n';
-        text+=generated_rules[i]+'\n';
-        //text+=rules[i]+'<br/>\n';
-    }
-    return text;
-}
-
-function show_saved_generated_statistics(){
-    var text;
-    text='#white_names_counter:<br/>\ņ';
-    var rules=GM_SuperValue.get ("white_names_counter");
-    for (var key in rules) {
-        text+=key+": "+rules[key]+'<br/>\n';
-    }
-    text+='<br/>\n############<br/>\n<br/>\n';
-    text+='#black_keyword_counter:<br/>\ņ';
-    rules=GM_SuperValue.get ("black_keywords_counter");
-    for (var key in rules) {
-        text+=key+": "+rules[key]+'<br/>\n';
-    }
-    return text;
 }
 
 // Kick it off starting with the `body` element
