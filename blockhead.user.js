@@ -3,7 +3,7 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version 19
+// @version 20
 // @grant GM.getValue
 // @grant GM.setValue
 // @grant GM_getValue
