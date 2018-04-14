@@ -31,9 +31,12 @@ this list is being created with this tool https://github.com/elypter/rule_keywor
 There is also a whitelist for certain keywords and tag names to reduce flase positives and processing time.
 
 on an 10 year old laptop it can take up 100-200ms or more in extreme cases so the performance aspect is not completely neglegtible but also not a deal breaker.
+
 there is also the option to save automatically generated rules to disk by switching on the save_generated_rules variable in the memory tab of tampermonkey or violentmoneky and later putting "blockhead-rules" into the url of any website like https://example.com/?q=blockhead-rules the rules will be displayed on the site on a simple div layer so you can copy them where you like. for example into an adbloker or you could help out yourduskquibbles with his webannoyances ultralist https://github.com/yourduskquibbles/webannoyances/issues
 statistics of the keyword usage can be retrieved in the same way by using "blockhead-statistics" they have to be turned on first as well.
-https://github.com/elypter/BlockHead/ License: GPL3
+
+https://github.com/elypter/BlockHead/ 
+License: GPL3
 */
 
 //this style will be added to all elements that this script detects as sticky annoyances.
