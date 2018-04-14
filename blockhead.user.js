@@ -357,7 +357,7 @@ function copy_saved_generated_rules(){
         //text+=s+'\n';
         text+=generated_rules[i]+'\n';
         //text+=rules[i]+'<br/>\n';
-    
+    }
     GM_setClipboard(text, { type: 'text', mimetype: 'text/plain'});
 }
 
