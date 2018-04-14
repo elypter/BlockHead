@@ -3,7 +3,7 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version 20
+// @version 21
 // @grant GM.getValue
 // @grant GM.setValue
 // @grant GM_getValue
@@ -246,7 +246,7 @@ function element_walker(elm) {
             if (debug==3) console.log("pinning sticky: "+elm.id+","+elm.className+","+elm.tagName);
 
             if (elm.id){
-                rule=window.location.hostname+"###"+elm.id+":style(position: "+"fixed"+" !important;)";
+                rule=window.location.hostname+"###"+elm.id+":style(position: "+"relative"+" !important;)";
                 if(generated_rules.indexOf(rule)==-1){
                     generated_rules.push(rule);
                     if (debug==3||debug==1) console.log(rule);
@@ -254,7 +254,7 @@ function element_walker(elm) {
             }
             if(elm.className){
                 for (var i=0; i < class_list.length; i++){
-                    rule=window.location.hostname+"##."+class_list[i]+":style(position: "+"fixed" +" !important;)";
+                    rule=window.location.hostname+"##."+class_list[i]+":style(position: "+"relative" +" !important;)";
                     if(generated_rules.indexOf(rule)==-1){
                         generated_rules.push(rule);
                         if (debug==3||debug==1) console.log(rule);
