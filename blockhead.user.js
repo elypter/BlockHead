@@ -3,7 +3,7 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version 22
+// @version 21
 // @grant GM.getValue
 // @grant GM.setValue
 // @grant GM_getValue
@@ -63,7 +63,7 @@ var toggle_rule_saving_handle;
 
 var toggle_statistics_saving_handle;
 
-function setup(){
+
 
     //debug switch. if on it prints out information in the java script console.
     var debug=GM_SuperValue.get ("debug")==true?GM_SuperValue.get ("debug"):0; //1=yes 2=no 3=intense change value in memory tab
@@ -89,7 +89,7 @@ function setup(){
     var save_generated_rules=GM_SuperValue.get ("save_generated_rules")==true?GM_SuperValue.get ("save_generated_rules"):0; //1=yes 2=no change of value in memory tab
     GM_SuperValue.set ("save_generated_rules",save_generated_rules);
 
-  
+function setup(){  
   
     if (save_generated_rules==2) toggle_rule_saving_handle=GM_registerMenuCommand("record generated rules", "toggle_rule_saving");
     if (save_generated_rules==1) toggle_rule_saving_handle=GM_registerMenuCommand("stop recording generated rules", "toggle_rule_saving");
@@ -103,15 +103,27 @@ function setup(){
 setup();
 
 function toggle_rule_saving(){
-  if (save_generated_rules==2) GM_SuperValue.set ("save_generated_rules",1);
-  if (save_generated_rules==1) GM_SuperValue.set ("save_generated_rules",2);
+  if (save_generated_rules==2) {
+    save_generated_rules=1;
+    GM_SuperValue.set ("save_generated_rules",1);
+  }
+  if (save_generated_rules==1){
+    save_generated_rules=2;
+    GM_SuperValue.set ("save_generated_rules",2);
+  } 
   //GM_unregisterMenuCommand(toggle_rule_saving_handle);
   setup();
 }
 
 function toggle_statistics_saving(){
-  if (save_generated_rules==2) GM_SuperValue.set ("save_keyword_statistics",1);
-  if (save_generated_rules==1) GM_SuperValue.set ("save_keyword_statistics",2);
+  if (save_generated_rules==2) {
+    save_keyword_statistics=1;
+    GM_SuperValue.set ("save_keyword_statistics",1);
+  }
+  if (save_generated_rules==1) {
+    save_keyword_statistics=2;
+    GM_SuperValue.set ("save_keyword_statistics",2);
+  }
   //GM_unregisterMenuCommand(toggle_statistics_saving_handle);
   setup();
 }
