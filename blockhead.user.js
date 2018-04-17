@@ -3,7 +3,7 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version 21
+// @version 22
 // @grant GM.getValue
 // @grant GM.setValue
 // @grant GM_getValue
@@ -57,31 +57,62 @@ var white_names = ["side","guide","article","html5","story","main","left","right
 var ignore_tags = ["a","A","script","SCRIPT","body","BODY","li","LI","ul","UL","br","BR","h5","H5","b","B","strong","STRONG","svg","SVG","path","PATHH","h2","H2",
                    "code","CODE","tr","TR","td","TD","h3","H3","h1","H1","h4","H4"];//,"noscript","NOSCRIPT"
 
-//debug switch. if on it prints out information in the java script console.
-var debug=GM_SuperValue.get ("debug")==true?GM_SuperValue.get ("debug"):0; //1=yes 2=no 3=intense change value in memory tab
-GM_SuperValue.set ("debug",debug);
+var toggle_rule_saving_handle;
 
-//search for floating elements that get added after page load.
-var mutation_check=GM_SuperValue.get ("mutation_check")==true?GM_SuperValue.get ("mutation_check"):1; //1=yes 2=no change value in memory tab
-GM_SuperValue.set ("mutation_check",mutation_check);
+var toggle_statistics_saving_handle;
 
-//all elements of a site will be checked individually for their computed style and changed if there is a match
-var walk_elements=GM_SuperValue.get ("walk_elements")==true?GM_SuperValue.get ("walk_elements"):1; //1=yes 2=no change value in memory tab
-GM_SuperValue.set ("walk_elements",walk_elements);
+function setup(){
 
-//all stylesheets will be checked for classes and changed if there is a match
-var walk_styles=GM_SuperValue.get ("walk_styles")==true?GM_SuperValue.get ("walk_styles"):0; //1=yes 2=no change value in memory tab
-GM_SuperValue.set ("walk_styles",walk_styles);
+    //debug switch. if on it prints out information in the java script console.
+    var debug=GM_SuperValue.get ("debug")==true?GM_SuperValue.get ("debug"):0; //1=yes 2=no 3=intense change value in memory tab
+    GM_SuperValue.set ("debug",debug);
 
-//this will save the statistics of how often a keyword is being matched in a local variable that can be viewed in the memory tab
-var save_keyword_statistics=GM_SuperValue.get ("save_keyword_statistics")==true?GM_SuperValue.get ("save_keyword_statistics"):0; //1=yes 2=no change of value in memory tab
-GM_SuperValue.set ("save_keyword_statistics",save_keyword_statistics);
+    //search for floating elements that get added after page load.
+    var mutation_check=GM_SuperValue.get ("mutation_check")==true?GM_SuperValue.get ("mutation_check"):1; //1=yes 2=no change value in memory tab
+    GM_SuperValue.set ("mutation_check",mutation_check);
 
-//this will save the rules generated based on the blocking in a local variable that can be viewed in the memory tab
-var save_generated_rules=GM_SuperValue.get ("save_generated_rules")==true?GM_SuperValue.get ("save_generated_rules"):0; //1=yes 2=no change of value in memory tab
-GM_SuperValue.set ("save_generated_rules",save_generated_rules);
+    //all elements of a site will be checked individually for their computed style and changed if there is a match
+    var walk_elements=GM_SuperValue.get ("walk_elements")==true?GM_SuperValue.get ("walk_elements"):1; //1=yes 2=no change value in memory tab
+    GM_SuperValue.set ("walk_elements",walk_elements);
 
-GM_registerMenuCommand("Copy generated rules to clipboard", "show_saved_generated_rules");
+    //all stylesheets will be checked for classes and changed if there is a match
+    var walk_styles=GM_SuperValue.get ("walk_styles")==true?GM_SuperValue.get ("walk_styles"):0; //1=yes 2=no change value in memory tab
+    GM_SuperValue.set ("walk_styles",walk_styles);
+
+    //this will save the statistics of how often a keyword is being matched in a local variable that can be viewed in the memory tab
+    var save_keyword_statistics=GM_SuperValue.get ("save_keyword_statistics")==true?GM_SuperValue.get ("save_keyword_statistics"):0; //1=yes 2=no change of value in memory tab
+    GM_SuperValue.set ("save_keyword_statistics",save_keyword_statistics);
+
+    //this will save the rules generated based on the blocking in a local variable that can be viewed in the memory tab
+    var save_generated_rules=GM_SuperValue.get ("save_generated_rules")==true?GM_SuperValue.get ("save_generated_rules"):0; //1=yes 2=no change of value in memory tab
+    GM_SuperValue.set ("save_generated_rules",save_generated_rules);
+
+  
+  
+    if (save_generated_rules==2) toggle_rule_saving_handle=GM_registerMenuCommand("record generated rules", "toggle_rule_saving");
+    if (save_generated_rules==1) toggle_rule_saving_handle=GM_registerMenuCommand("stop recording generated rules", "toggle_rule_saving");
+    if (save_keyword_statistics==2) toggle_statistics_saving_handle=GM_registerMenuCommand("record statistics", "toggle_rule_saving");
+    if (save_keyword_statistics==1) toggle_statistics_saving_handle=GM_registerMenuCommand("stop recording statistics", "toggle_statistics_saving");
+  
+    if (save_generated_rules==1) GM_registerMenuCommand("Copy generated rules to clipboard", "copy_saved_generated_rules");
+    if (save_keyword_statistics==1) GM_registerMenuCommand("Copy generated rules to clipboard", "copy_saved_generated_statistics");
+}
+
+setup();
+
+function toggle_rule_saving(){
+  if (save_generated_rules==2) GM_SuperValue.set ("save_generated_rules",1);
+  if (save_generated_rules==1) GM_SuperValue.set ("save_generated_rules",2);
+  //GM_unregisterMenuCommand(toggle_rule_saving_handle);
+  setup();
+}
+
+function toggle_statistics_saving(){
+  if (save_generated_rules==2) GM_SuperValue.set ("save_keyword_statistics",1);
+  if (save_generated_rules==1) GM_SuperValue.set ("save_keyword_statistics",2);
+  //GM_unregisterMenuCommand(toggle_statistics_saving_handle);
+  setup();
+}
 
 function counted_element_walker(elm,orig){
     count_element_walker++;
@@ -191,7 +222,7 @@ function element_walker_all(startElem) {
             //return;
         }else if(has_matched==0){
             if (elm.id){
-                rule=window.location.hostname+"#@#"+elm.id;
+                rule=window.location.hostname+"#@##"+elm.id;
                 if(generated_rules.indexOf(rule)==-1){
                     if(!(generated_rules.indexOf(rule) > -1)) generated_rules.push(rule);
                     //console.log(rule);
@@ -199,7 +230,7 @@ function element_walker_all(startElem) {
             }
             if(elm.className){
                 for (var j=0; j < class_list.length; j++){
-                    rule=window.location.hostname+"#@."+class_list[j];
+                    rule=window.location.hostname+"#@#."+class_list[j];
                     if(generated_rules.indexOf(rule)==-1){
                         if(!(generated_rules.indexOf(rule) > -1)) generated_rules.push(rule);
                         //console.log(rule);
