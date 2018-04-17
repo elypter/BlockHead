@@ -12,6 +12,8 @@
 // @grant GM.getResourceText
 // @grant GM.registerMenuCommand
 // @grant GM_registerMenuCommand
+// @grant GM.unregisterMenuCommand
+// @grant GM_unregisterMenuCommand
 // @grant GM.setClipboard
 // @grant GM_setClipboard
 // @require https://greasemonkey.github.io/gm4-polyfill/gm4-polyfill.js
