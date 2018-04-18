@@ -3,7 +3,7 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version 22
+// @version 23
 // @grant GM.getValue
 // @grant GM.setValue
 // @grant GM_getValue
@@ -51,7 +51,7 @@ var count_style_walking=0; //debug:counts how often checking stylesheets is trig
 var black_keywords=GM_getResourceText("black_keywords").toString().split("\n"); //list generated with rule_keyword_generator from webannoyances ultralist
 
 //id and classes that  any of these keycontainwords will not be modified
-var white_names = ["side","guide","article","preload","load","html5","story","main","left","right","content","account__section","container--wide","container__main","panel",
+var white_names = ["side","preload","load","guide","article","html5","story","main","left","right","content","account__section","container--wide","container__main","panel",
                    "body","gutter","embed","watch","background","middleContainer","drag-and-drop"];
 //var white_names = ["example-whitelist-entry"];
 
@@ -291,7 +291,7 @@ function element_walker(elm) {
             if (debug==3) console.log("pinning sticky: "+elm.id+","+elm.className+","+elm.tagName);
 
             if (elm.id){
-                rule=window.location.hostname+"###"+elm.id+":style(position: "+"relative"+" !important;)";
+                rule=window.location.hostname+"###"+elm.id+":style("+stylefix;+")";//":style(position: "+"relative"+" !important;)";
                 if(generated_rules.indexOf(rule)==-1){
                     generated_rules.push(rule);
                     if (debug==3||debug==1) console.log(rule);
@@ -299,7 +299,7 @@ function element_walker(elm) {
             }
             if(elm.className){
                 for (var i=0; i < class_list.length; i++){
-                    rule=window.location.hostname+"##."+class_list[i]+":style(position: "+"relative" +" !important;)";
+                    rule=window.location.hostname+"##."+class_list[i]+":style("+stylefix;+")"//":style(position: "+"relative" +" !important;)";
                     if(generated_rules.indexOf(rule)==-1){
                         generated_rules.push(rule);
                         if (debug==3||debug==1) console.log(rule);
