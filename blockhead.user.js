@@ -3,7 +3,7 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version 21
+// @version 22
 // @grant GM.getValue
 // @grant GM.setValue
 // @grant GM_getValue
@@ -65,29 +65,29 @@ var toggle_statistics_saving_handle;
 
 
 
-    //debug switch. if on it prints out information in the java script console.
-    var debug=GM_SuperValue.get ("debug")==true?GM_SuperValue.get ("debug"):0; //1=yes 2=no 3=intense change value in memory tab
-    GM_SuperValue.set ("debug",debug);
+//debug switch. if on it prints out information in the java script console.
+var debug=GM_SuperValue.get ("debug")==true?GM_SuperValue.get ("debug"):0; //1=yes 2=no 3=intense change value in memory tab
+GM_SuperValue.set ("debug",debug);
 
-    //search for floating elements that get added after page load.
-    var mutation_check=GM_SuperValue.get ("mutation_check")==true?GM_SuperValue.get ("mutation_check"):1; //1=yes 2=no change value in memory tab
-    GM_SuperValue.set ("mutation_check",mutation_check);
+//search for floating elements that get added after page load.
+var mutation_check=GM_SuperValue.get ("mutation_check")==true?GM_SuperValue.get ("mutation_check"):1; //1=yes 2=no change value in memory tab
+GM_SuperValue.set ("mutation_check",mutation_check);
 
-    //all elements of a site will be checked individually for their computed style and changed if there is a match
-    var walk_elements=GM_SuperValue.get ("walk_elements")==true?GM_SuperValue.get ("walk_elements"):1; //1=yes 2=no change value in memory tab
-    GM_SuperValue.set ("walk_elements",walk_elements);
+//all elements of a site will be checked individually for their computed style and changed if there is a match
+var walk_elements=GM_SuperValue.get ("walk_elements")==true?GM_SuperValue.get ("walk_elements"):1; //1=yes 2=no change value in memory tab
+GM_SuperValue.set ("walk_elements",walk_elements);
 
-    //all stylesheets will be checked for classes and changed if there is a match
-    var walk_styles=GM_SuperValue.get ("walk_styles")==true?GM_SuperValue.get ("walk_styles"):0; //1=yes 2=no change value in memory tab
-    GM_SuperValue.set ("walk_styles",walk_styles);
+//all stylesheets will be checked for classes and changed if there is a match
+var walk_styles=GM_SuperValue.get ("walk_styles")==true?GM_SuperValue.get ("walk_styles"):0; //1=yes 2=no change value in memory tab
+GM_SuperValue.set ("walk_styles",walk_styles);
 
-    //this will save the statistics of how often a keyword is being matched in a local variable that can be viewed in the memory tab
-    var save_keyword_statistics=GM_SuperValue.get ("save_keyword_statistics")==true?GM_SuperValue.get ("save_keyword_statistics"):0; //1=yes 2=no change of value in memory tab
-    GM_SuperValue.set ("save_keyword_statistics",save_keyword_statistics);
+//this will save the statistics of how often a keyword is being matched in a local variable that can be viewed in the memory tab
+var save_keyword_statistics=GM_SuperValue.get ("save_keyword_statistics")==true?GM_SuperValue.get ("save_keyword_statistics"):0; //1=yes 2=no change of value in memory tab
+GM_SuperValue.set ("save_keyword_statistics",save_keyword_statistics);
 
-    //this will save the rules generated based on the blocking in a local variable that can be viewed in the memory tab
-    var save_generated_rules=GM_SuperValue.get ("save_generated_rules")==true?GM_SuperValue.get ("save_generated_rules"):0; //1=yes 2=no change of value in memory tab
-    GM_SuperValue.set ("save_generated_rules",save_generated_rules);
+//this will save the rules generated based on the blocking in a local variable that can be viewed in the memory tab
+var save_generated_rules=GM_SuperValue.get ("save_generated_rules")==true?GM_SuperValue.get ("save_generated_rules"):0; //1=yes 2=no change of value in memory tab
+GM_SuperValue.set ("save_generated_rules",save_generated_rules);
 
 function setup(){  
   
