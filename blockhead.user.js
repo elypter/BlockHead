@@ -216,7 +216,7 @@ function element_walker_all(startElem) {
             if (debug==3||debug==1) console.log("pinning sticky: "+elm.id+","+elm.className+","+elm.tagName);
 
             if (elm.id){
-                rule=window.location.hostname+"###"+elm.id+":style(position: "+"fixed"+" !important;)";
+                rule=window.location.hostname+"###"+elm.id+":style(position: "+stylefix+" !important;)";
                 if(generated_rules.indexOf(rule)==-1){
                     if(!(generated_rules.indexOf(rule) > -1)) generated_rules.push(rule);
                     //console.log(rule);
@@ -224,7 +224,7 @@ function element_walker_all(startElem) {
             }
             if(elm.className){
                 for (var i=0; i < class_list.length; i++){
-                    rule=window.location.hostname+"##."+class_list[i]+":style(position: "+"fixed" +" !important;)";
+                    rule=window.location.hostname+"##."+class_list[i]+":style(position: "+stylefix+" !important;)";
                     if(generated_rules.indexOf(rule)==-1){
                         if(!(generated_rules.indexOf(rule) > -1)) generated_rules.push(rule);
                         //console.log(rule);
