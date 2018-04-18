@@ -51,7 +51,7 @@ var count_style_walking=0; //debug:counts how often checking stylesheets is trig
 var black_keywords=GM_getResourceText("black_keywords").toString().split("\n"); //list generated with rule_keyword_generator from webannoyances ultralist
 
 //id and classes that  any of these keycontainwords will not be modified
-var white_names = ["side","guide","article","html5","story","main","left","right","content","account__section","container--wide","container__main","panel",
+var white_names = ["side","guide","article","preload","load","html5","story","main","left","right","content","account__section","container--wide","container__main","panel",
                    "body","gutter","embed","watch","background","middleContainer","drag-and-drop"];
 //var white_names = ["example-whitelist-entry"];
 
