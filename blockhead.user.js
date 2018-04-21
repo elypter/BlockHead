@@ -3,7 +3,7 @@
 // @namespace blockhead
 // @description Blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down.
 // @match *://*/*
-// @version 23
+// @version 24
 // @grant GM.getValue
 // @grant GM.setValue
 // @grant GM_getValue
@@ -63,7 +63,7 @@ var toggle_rule_saving_handle;
 
 var toggle_statistics_saving_handle;
 
-
+var stop_scrolling_triggers = true; 
 
 //debug switch. if on it prints out information in the java script console.
 var debug=GM_SuperValue.get ("debug")==true?GM_SuperValue.get ("debug"):0; //1=yes 2=no 3=intense change value in memory tab
@@ -132,7 +132,7 @@ function counted_element_walker(elm,orig){
     count_element_walker++;
 
     //this disables all javascript that is being triggered when scrolling
-    window.addEventListener("scroll", function (event) {
+    if(stop_scrolling_triggers) window.addEventListener("scroll", function (event) {
         event.stopPropagation();
     }, true);
     console.log("check number "+count_element_walker+" from: "+orig);
