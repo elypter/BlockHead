@@ -56,7 +56,7 @@ var white_names = ["side","preload","load","guide","article","html5","story","ma
 //var white_names = ["example-whitelist-entry"];
 
 //tags that will not be cheked
-var ignore_tags = ["a","A","script","SCRIPT","body","BODY","li","LI","ul","UL","br","BR","h5","H5","b","B","strong","STRONG","svg","SVG","path","PATHH","h2","H2",
+var ignore_tags = ["a","A","script","SCRIPT","body","BODY","li","LI","ul","UL","br","BR","h5","H5","b","B","strong","STRONG","svg","SVG","path","PATH","h2","H2",
                    "code","CODE","tr","TR","td","TD","h3","H3","h1","H1","h4","H4"];//,"noscript","NOSCRIPT"
 
 var toggle_rule_saving_handle;
