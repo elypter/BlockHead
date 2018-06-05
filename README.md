@@ -1,4 +1,4 @@
-~~~MOVED TO GITLAB~~~ 
+++++++MOVED TO GITLAB+++++
 https://gitlab.com/elypter/BlockHead/
 
 Do you also get annoyed by all those pointless sticky headers with pointless logos, hamburger menus and no particular functionality that can wait for you to scroll up? are you getting flashbacks from your grandmas internet explorer with 10 toolbars installed? do you find it absurd that screens are getting bigger and bigger but there is less and less content to see? 
