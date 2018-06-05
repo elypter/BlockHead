@@ -1,3 +1,6 @@
+~~~MOVED TO GITLAB~~~ 
+https://gitlab.com/elypter/BlockHead/
+
 Do you also get annoyed by all those pointless sticky headers with pointless logos, hamburger menus and no particular functionality that can wait for you to scroll up? are you getting flashbacks from your grandmas internet explorer with 10 toolbars installed? do you find it absurd that screens are getting bigger and bigger but there is less and less content to see? 
 
 Then get ready to claim back some of that space with this userscript that blocks headers and other sticky elements from wasting precious vertical screen estate by pinning them down to the background of the website. everything is staying acessible but it wont creep up on you like a creeping shower curtain anymore when scrolling.
